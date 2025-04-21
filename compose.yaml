@@ -1,0 +1,8 @@
+services:
+  todos:
+    build: .
+    image: todos-img
+    container_name: todos
+    restart: always
+    ports:
+      - '80:80'
