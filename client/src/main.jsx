@@ -1,39 +1,39 @@
-import {createRoot} from 'react-dom/client'
 import {createContext, useContext, useState, useEffect} from 'react'
+import {createRoot} from 'react-dom/client'
 import axios from 'axios'
 
 import 'font-awesome/css/font-awesome.css'
 import './index.css'
 
-const DataContext = createContext()
-
-const useData = () => useContext(DataContext)
-
 const $api = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL
 })
+
+const DataContext = createContext()
+
+const useData = () => useContext(DataContext)
 
 const DataProvider = ({children}) => {
   const [todoData, setTodoData] = useState([])
   
   const getTodo = async () => {
-    const {data} = await $api.get('/api/tododata')
+    const {data} = await $api.get('/api/todo')
     setTodoData(data)
   }
   
-  const deleteTodo = async id => {
-    await $api.delete(`/api/tododata/${id}`)
-    setTodoData(todoData.filter(el => el.id !== id))
+  const addTodo = async label => {
+    const {data} = await $api.post('/api/todo', {label})
+    setTodoData([...todoData, data])
   }
   
   const editTodo = async (id, action) => {
-    const {data} = await $api.patch(`/api/tododata/${id}`, action)
+    const {data} = await $api.patch(`/api/todo/${id}`, action)
     setTodoData(todoData.map(el => el.id === id ? el = data : el))
   }
   
-  const addTodo = async label => {
-    const {data} = await $api.post('/api/tododata', {label})
-    setTodoData([...todoData, data])
+  const deleteTodo = async id => {
+    await $api.delete(`/api/todo/${id}`)
+    setTodoData(todoData.filter(el => el.id !== id))
   }
   
   useEffect(() => {
@@ -41,7 +41,7 @@ const DataProvider = ({children}) => {
   }, [])
   
   return (
-    <DataContext.Provider value={{todoData, deleteTodo, editTodo, addTodo}}>
+    <DataContext.Provider value={{todoData, addTodo, editTodo, deleteTodo}}>
       {children}
     </DataContext.Provider>
   )
@@ -68,15 +68,16 @@ const TodoListItem = ({label, important, done, onDeleteItem, onEditItem}) => (
 )
 
 const TodoList = () => {
-  const {todoData, deleteTodo, editTodo} = useData()
+  const {todoData, editTodo, deleteTodo} = useData()
+  
   return (
     <ul className='border border-gray-300 rounded-md divide-y divide-gray-300 bg-gray-100 text-xl'>
       {todoData.map(({id, ...items}) => (
         <li key={id} className='py-1 px-3'>
           <TodoListItem
             {...items}
-            onDeleteItem={() => deleteTodo(id)}
-            onEditItem={action => editTodo(id, action)} />
+            onEditItem={action => editTodo(id, action)}
+            onDeleteItem={() => deleteTodo(id)} />
         </li>
       ))}
     </ul>
